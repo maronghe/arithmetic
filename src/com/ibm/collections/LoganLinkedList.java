@@ -1,51 +1,119 @@
 package com.ibm.collections;
 
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 /**
  * 单向链表
  */
-public class LoganLinkedList<E> {
-	private int size = 0;
-	private LoganNode<E> head;
-	private LoganNode<E> last;
+public class LoganLinkedList<E> implements Iterable {
+	private transient int size = 0;// transient 不参与序列化反序列化
+	private transient LoganNode<E> first;
+	private transient LoganNode<E> last;
+
 
 	/**
 	 *  添加个节点
 	 * @param value
 	 */
-	public void add(E value){
-		if(head == null){
-//			LoganNode<Integer> tempNode = new LoganNode(node);
-			head = new LoganNode<>(value);
-			last = new LoganNode<>(value);
-//			head.setValue(value);
-//			last.setValue(value);
+	public  boolean add(E value){
+		final LoganNode<E> l = last;
+		final LoganNode<E> newNode = new LoganNode(value,null);
+		last = newNode;
+		if(first == null){
+			first = newNode;
 		}else{
-			LoganNode temp = head;
-			while (temp.getNext() != null){
-				temp = temp.getNext();
-			}
-//			temp.setValue(value);
-			temp.setNext(new LoganNode(value));
-			last = new LoganNode<>(value);
+			l.setNext(newNode); // the second time, l is the first item
 		}
 		size ++;
+		return true;
 	}
 
 	/**
 	 * 获取当前node
 	 * @return
 	 */
-	public E get(int i){
+	public  E get(int i){
 		checkIndexArray(i);
-		LoganNode<E> temp = head;
-		int j = 0;
-		for (; j < i; j++) {
+		LoganNode<E> temp = first;
+		for (int j = 0; j < i; j++) {
 			temp = temp.getNext();
 		}
 		return temp.getValue();
 	}
+
+	/**
+	 * 移除第一个
+	 * @return
+	 */
+	public  E removeFirst(){
+		if(first == null){
+			throw new NoSuchElementException();
+		}
+
+		final LoganNode<E> f = first;
+		if(first.getNext() == null){
+			first = null;
+		}else {
+			first = first.getNext();
+		}
+		E e = f.getValue();
+		f.setValue(null);
+		f.setNext(null); // help GC
+		size --;
+		if(size == 0){
+			first = null;
+			last = null;
+		}
+		return e;
+	}
+
+	private E removeFirst2(){
+		final E element = first.getValue();
+		final LoganNode<E> next = first.getNext();
+		first.setValue(null);
+		first.setNext(null);  // help GC
+		first = next;
+		if (next == null)
+			last = null;
+		else
+			next.setNext(null);
+		size--;
+		return element;
+	}
+
+
+	/**
+	 * 删除最后一个
+	 * @return
+	 */
+	public E removeLast(){
+		if(last == null){
+			throw new NoSuchElementException();
+		}
+		E e = last.getValue();
+		last.setValue(null);
+
+		LoganNode<E> l = first;
+		for (int i = 0; i < size - 2; i++) {
+			l = l.getNext();
+		}
+		last = l;
+		last.setNext(null);
+		size --;
+
+		if(size == 0){
+			first = null;
+			last = null;
+		}
+		return e;
+	}
+
+	//public Iterator<E> iterator(){
+		//return
+	//}
+
 
 	/**
 	 * 检查数组是否越界
@@ -66,6 +134,14 @@ public class LoganLinkedList<E> {
 	}
 
 	/**
+	 * 数组是否为空
+	 * @return
+	 */
+	public boolean isEmpty(){
+		return size > 0 ? true : false;
+	}
+
+	/**
 	 * 获取最后节点
 	 * @return last one
 	 */
@@ -78,10 +154,10 @@ public class LoganLinkedList<E> {
 	}
 
 	public E getFirst(){
-		if(head == null){
+		if(first == null){
 			throw new NoSuchElementException();
 		}else {
-			return (E) head.getValue();
+			return (E) first.getValue();
 		}
 	}
 
@@ -108,6 +184,10 @@ public class LoganLinkedList<E> {
 //		System.out.println(list.get(0));
 	}
 
+	@Override
+	public Iterator iterator() {
+		return null;
+	}
 }
 
 /**
@@ -115,8 +195,9 @@ public class LoganLinkedList<E> {
  */
 class LoganNode<E> {
 
-	public LoganNode(E value){
+	public LoganNode(E value,LoganNode<E> next){
 		this.value = value;
+		this.next = next;
 	}
 	private E value;
 	private LoganNode next;
